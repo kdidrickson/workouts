@@ -14,23 +14,7 @@ const uiConfig = {
   }
 };
 
-interface AuthProps {
-  onAuthStateChanged: (user: firebase.User | null) => void;
-}
-
-export class Auth extends React.Component<AuthProps, {}> {
-  unregisterAuthObserver?: () => void;
-
-  componentDidMount() {
-    this.unregisterAuthObserver = firebase.auth().onAuthStateChanged(
-        (user) => this.props.onAuthStateChanged(user)
-    );
-  }
-  
-  componentWillUnmount() {
-    this.unregisterAuthObserver && this.unregisterAuthObserver();
-  }
-
+export class Auth extends React.Component<{}, {}> {
   render() {
     return (
       <div className="auth">

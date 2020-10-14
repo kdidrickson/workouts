@@ -14,30 +14,40 @@ import {
 } from "react-router-dom";
 
 interface AppState {
-  isSignedIn: boolean;
+  isSignedIn: boolean | null;
 }
 
 class App extends React.Component<{}, AppState> {
-  state = {
-    isSignedIn: false,
-  }
-
   constructor(props: {}) {
     super(props);
-    this.onAuthStateChanged = this.onAuthStateChanged.bind(this);
+    this.state = {
+      isSignedIn: null,
+    };
   }
 
-  onAuthStateChanged(user: firebase.User | null) {
-    this.setState({isSignedIn: !!user});
+  unregisterAuthObserver?: () => void;
+
+  componentDidMount() {
+    this.unregisterAuthObserver = firebase.auth().onAuthStateChanged(
+        (user) => this.setState({isSignedIn: !!user})
+    );
+  }
+  
+  componentWillUnmount() {
+    this.unregisterAuthObserver && this.unregisterAuthObserver();
   }
 
   render() {
+    if(this.state.isSignedIn === null) {
+      return 'Loading...';
+    }
+
     const user = firebase.auth().currentUser as firebase.User;
     return (
       <Router>
         <Switch>
           <Route exact path="/login">
-            {this.state.isSignedIn ? <Redirect to={'/'} /> : <Auth onAuthStateChanged={this.onAuthStateChanged} />}
+            {this.state.isSignedIn ? <Redirect to={'/'} /> : <Auth />}
           </Route>
           <Route exact path="/">
             {this.state.isSignedIn ? <Home user={user} /> : <Redirect to={'/login'} />}
