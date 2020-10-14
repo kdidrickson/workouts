@@ -3,6 +3,7 @@ import './App.css';
 import {Auth} from './Auth';
 import {Home} from './Home';
 import {Create} from './Create';
+import {Workout} from './Workout';
 
 import * as firebase from "firebase/app";
 import "firebase/auth";
@@ -54,6 +55,9 @@ class App extends React.Component<{}, AppState> {
           </Route>
           <Route path="/create">
             {this.state.isSignedIn ? <Create user={user} /> : <Redirect to={'/login'} />}
+          </Route>
+          <Route path="/workout/:id">
+            {this.state.isSignedIn ? <Workout user={user} /> : <Redirect to={'/login'} />}
           </Route>
         </Switch>
       </Router>
