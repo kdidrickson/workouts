@@ -1,0 +1,35 @@
+{
+  "rules": {
+    "exercises": {
+      "$uid": {
+        ".write": "$uid === auth.uid",
+        ".read": "$uid === auth.uid",
+        "$exercise": {
+          "name": {".validate": "true"},
+          "youtubeUrl": {".validate": "true"},
+          "notes": {".validate": "true"},
+          "$other": {".validate": "false"}
+        }
+      }
+    },
+    "workouts": {
+      "$uid": {
+        ".write": "$uid === auth.uid",
+        ".read": "$uid === auth.uid",
+        "$workout": {
+          "name": {".validate": "true"},
+          "workoutSets": {
+            "$workoutSet": {
+              "exerciseId": {".validate": "true"},
+              "targetReps": {".validate": "true"},
+              "restInterval": {".validate": "true"},
+              "notes": {".validate": "true"},
+              "$other": {".validate": "false"} 
+            }
+          },
+          "$other": {".validate": "false"}
+        }
+      }
+    }
+  }
+}
