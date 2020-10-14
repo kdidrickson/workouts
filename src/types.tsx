@@ -1,5 +1,5 @@
 export interface Exercise {
-  id: string;
+  id?: string;
   name: string;
   youtubeUrl?: string;
   notes?: string;

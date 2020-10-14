@@ -51,6 +51,7 @@ export class Create extends React.Component<CreateProps, CreateState> {
     const updateWorkoutSet = (prop: string, value: any) => {
       let workoutSets = [...this.state.workoutSets];
       if(prop in workoutSets[index]) {
+        // @ts-ignore
         workoutSets[index][prop as keyof WorkoutSet] = value;
         this.setState({workoutSets});
       }
