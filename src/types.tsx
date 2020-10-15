@@ -12,6 +12,11 @@ export interface WorkoutSet {
   notes?: string;
 };
 
+export interface WorkoutSubset {
+  reps?: number;
+  weight?: number;
+}
+
 export interface Workout {
   id?: string;
   name?: string;

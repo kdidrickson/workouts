@@ -30,6 +30,31 @@
           "$other": {".validate": "false"}
         }
       }
+    },
+    "workoutLogs": {
+      "$uid": {
+        ".write": "$uid === auth.uid",
+        ".read": "$uid === auth.uid",
+        "$workoutLog": {
+          "start": {".validate": "true"},
+          "end": {".validate": "true"},
+          "workoutSets": {
+            "$workoutSetLog": {
+              "setsCompleted": {".validate": "true"},
+              "skipped": {".validate": "true"},
+              "subsets": {
+                "$subsetLog": {
+                  "reps": {".validate": "true"},
+                  "weight": {".validate": "true"},
+                  "other": {".validate": "false"}
+                }
+              },
+              "$other": {".validate": "false"}
+            }
+          },
+          "$other": {".validate": "false"}
+        }
+      }
     }
   }
 }

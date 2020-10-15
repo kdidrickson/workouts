@@ -3,8 +3,10 @@ import * as firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/database";
 import {withRouter, RouteComponentProps} from "react-router";
+import {Link} from 'react-router-dom';
 
-import {Exercise, Workout as WorkoutType, WorkoutSet} from './types';
+import {ExerciseLogging} from './ExerciseLogging';
+import {Exercise, Workout as WorkoutType, WorkoutSet, WorkoutSubset} from './types';
 
 
 interface WorkoutProps extends RouteComponentProps<{id: string}> {
@@ -17,6 +19,13 @@ interface WorkoutState {
   currentWorkoutSetId: string | null;
   exercises?: {[key: string]: Exercise},
   isResting: boolean;
+  workoutLogRef?: firebase.database.Reference;
+  isFinished: boolean;
+  setsCompleted: number;
+  skippedSetIds: string[];
+  snoozedSetIds: string[];
+  start?: number;
+  end?: number;
 }
 
 class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
@@ -26,6 +35,10 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       isRunning: false,
       currentWorkoutSetId: null,
       isResting: false,
+      isFinished: false,
+      setsCompleted: 0,
+      skippedSetIds: [],
+      snoozedSetIds: [],
     };
     this.renderActiveWorkout = this.renderActiveWorkout.bind(this);
     this.renderStagingWorkout = this.renderStagingWorkout.bind(this);
@@ -34,7 +47,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
   componentDidMount() {
     firebase.database().ref(
       `workouts/${this.props.user.uid}/${this.props.match.params.id}`
-    ).on('value', (snapshot) => {
+    ).once('value', (snapshot) => {
       this.setState({workout: snapshot.val()});
     });
     firebase.database().ref(
@@ -42,6 +55,27 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     ).on('value', (snapshot) => {
       this.setState({exercises: snapshot.val()});
     });
+  }
+
+  componentDidUpdate(prevProps: WorkoutProps, prevState: WorkoutState) {
+    if(!prevState.workout && this.state.workout) {
+      this.setState({
+        currentWorkoutSetId: this.getNextWorkoutSetId(),
+      });
+    }
+
+    if(!prevState.isRunning && this.state.isRunning) {
+      const workoutLogRef = firebase.database().ref(`workoutLogs/${this.props.user.uid}`).push();
+      const start = Date.now()
+      workoutLogRef.set({start})
+      this.setState({workoutLogRef, start});
+    }
+
+    if(!prevState.isFinished && this.state.isFinished && this.state.workoutLogRef) {
+      const end = Date.now();
+      this.state.workoutLogRef.update({end});
+      this.setState({end});
+    }
   }
 
   getNextWorkoutSetId(): string | null {
@@ -89,34 +123,101 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
         >
           Done!
         </button>
+        <button
+          className="workout__active__skip-button"
+          onClick={() => {
+            this.setState({skippedSetIds: [...this.state.skippedSetIds, this.state.currentWorkoutSetId]});
+            if(this.state.workoutLogRef) {
+              this.state.workoutLogRef.child(`workoutSets/${this.state.currentWorkoutSetId}`).update({
+                skipped: true,
+              })
+            }
+          }}
+        >
+          Skip
+        </button>
+        <button
+          className="workout__active__snooze-button"
+          onClick={() => {
+            this.setState({snoozedSetIds: [...this.state.snoozedSetIds, this.state.currentWorkoutSetId]});
+          }}
+        >
+          Snooze
+        </button>
       </div>
     );
   }
 
-  renderExericseLogging(workoutSet: WorkoutSet, exercise: Exercise) {
+  renderFinishedWorkout() {
+    const {start, end} = this.state;
+
+    let workoutDuration;
+    if(start && end) {
+      const date = new Date(0);
+      date.setMilliseconds(end - start);
+      workoutDuration = date.toISOString().substr(11, 8);
+    }
+
     return (
-      <div className="workout__active__exercise-logging">
-        
+      <div className="workout__finished">
+        <h1>All done! 💪</h1>
+        {workoutDuration && (
+          <p className="workout__finished__duration">
+            {`Workout duration: ${workoutDuration}`}
+          </p>
+        )}
+        <Link className="workout__finished__home-button" to="/">
+          Back home
+        </Link>
       </div>
     );
   }
 
   renderActiveWorkout() {
-    const {exercises, currentWorkoutSetId, isResting} = this.state;
-    const currentWorkoutSet = this.state.workout.workoutSets[currentWorkoutSetId];
-
-    if(!currentWorkoutSet) {
-      return (
-        <h1>All done! 💪</h1>
-      );
+    const {
+      exercises,
+      currentWorkoutSetId,
+      isResting,
+      workoutLogRef,
+      isFinished,
+      setsCompleted,
+    } = this.state;
+    
+    if(isFinished) {
+      return this.renderFinishedWorkout();
     }
 
+    if(!currentWorkoutSetId) {
+      return 'Loading...';
+    }
+
+    const currentWorkoutSet = this.state.workout.workoutSets[currentWorkoutSetId];
     const currentExercise = exercises[currentWorkoutSet.exerciseId];
 
     return (
       <div className="workout__active">
-        <h1>currentExercise.name</h1>
-        {isResting ? this.renderExericseLogging(currentWorkoutSet, currentExercise) : this.renderExerciseExecution(currentWorkoutSet, currentExercise)}
+        <h1>{currentExercise.name}</h1>
+        {isResting ?
+          <ExerciseLogging
+            workoutSet={currentWorkoutSet}
+            exercise={currentExercise}
+            onSubmit={async (workoutSubsets: WorkoutSubset[]) => {
+              if(workoutLogRef && currentWorkoutSetId) {
+                workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).set({setsCompleted});
+                const subsetsRef = workoutLogRef.child(`workoutSets/${currentWorkoutSetId}/subsets`);
+                workoutSubsets.forEach(workoutSubset => subsetsRef.push().set(workoutSubset));
+              }
+              const nextWorkoutSetId = this.getNextWorkoutSetId();
+              this.setState({
+                isResting: false,
+                currentWorkoutSetId: nextWorkoutSetId,
+                isFinished: !nextWorkoutSetId,
+                setsCompleted: setsCompleted + 1,
+              });
+            }}
+          /> :
+          this.renderExerciseExecution(currentWorkoutSet, currentExercise)
+        }
       </div>
     );
   }
