@@ -57,6 +57,11 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       this.setState({workout: snapshot.val()});
     });
     firebase.database().ref(
+      `workouts/${this.props.user.uid}/${this.props.match.params.id}`
+    ).update({
+      lastAccessed: Date.now(),
+    });
+    firebase.database().ref(
       `exercises/${this.props.user.uid}`
     ).on('value', (snapshot) => {
       this.setState({exercises: snapshot.val()});

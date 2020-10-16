@@ -18,6 +18,7 @@
         ".read": "$uid === auth.uid",
         "$workout": {
           "name": {".validate": "true"},
+          "lastAccessed": {".validate": "true"},
           "workoutSets": {
             "$workoutSet": {
               "exerciseId": {".validate": "true"},
