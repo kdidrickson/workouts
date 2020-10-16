@@ -22,3 +22,15 @@ export interface Workout {
   name?: string;
   workoutSets: WorkoutSet[];
 };
+
+export interface WorkoutLogSet {
+  setsCompleted?: number;
+  skipped?: boolean;
+  subsets?: {[key: string]: WorkoutSubset};
+}
+
+export interface WorkoutLog {
+  start?: number;
+  end?: number;
+  workoutSets?: {[key: string]: WorkoutLogSet};
+}

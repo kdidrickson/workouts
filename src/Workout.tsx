@@ -7,7 +7,8 @@ import {Link} from 'react-router-dom';
 import * as lodash from 'lodash';
 
 import {ExerciseLogging} from './ExerciseLogging';
-import {Exercise, Workout as WorkoutType, WorkoutSet, WorkoutSubset} from './types';
+import {Exercise, Workout as WorkoutType, WorkoutSet, WorkoutSubset, WorkoutLog} from './types';
+import { last } from 'lodash';
 
 
 interface WorkoutProps extends RouteComponentProps<{id: string}> {
@@ -19,6 +20,7 @@ interface WorkoutState {
   workout?: WorkoutType;
   currentWorkoutSetId: string | null;
   exercises?: {[key: string]: Exercise},
+  workoutLogs?: {[key: string]: WorkoutLog} | null;
   isResting: boolean;
   workoutLogRef?: firebase.database.Reference;
   isFinished: boolean;
@@ -58,6 +60,11 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       `exercises/${this.props.user.uid}`
     ).on('value', (snapshot) => {
       this.setState({exercises: snapshot.val()});
+    });
+    firebase.database().ref(
+      `workoutLogs/${this.props.user.uid}`
+    ).limitToLast(3).on('value', (snapshot) => {
+      this.setState({workoutLogs: snapshot.val()});
     });
   }
 
@@ -264,21 +271,37 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     );
   }
 
+  renderWorkoutHistorySummary(workoutLogs: {[key: string]: WorkoutLog} | null) {
+    if(workoutLogs) {
+      const workoutLogsKeys = Object.keys(workoutLogs);
+      const lastWorkoutLog = workoutLogs[workoutLogsKeys[workoutLogsKeys.length - 1]];
+      if(lastWorkoutLog.start) {
+        const lastWorkoutStartDate = new Date(lastWorkoutLog.start);
+        return `You last did this workout on ${lastWorkoutStartDate.toISOString().slice(0,10)}`;
+      }
+    }
+
+    return `You've never done this workout before.`;
+  }
+
   renderStagingWorkout() {
-    const {workout, exercises} = this.state;
+    const {workout, exercises, workoutLogs} = this.state;
     const {user, match: {params}} = this.props;
 
     if(workout === null) {
-      return 'Couldn\'t find workout!';
+      return `Couldn't find workout!`;
     }
 
-    if(!workout || !exercises) {
-      return 'Loading...';
+    if(!workout || !exercises || workoutLogs === undefined) {
+      return `Loading...`;
     }
 
     return (
       <div className="workout__staging">
         <h1>{workout.name}</h1>
+        <div className="workout__history-summary">
+          {this.renderWorkoutHistorySummary(workoutLogs)}
+        </div>
         <button
           className="workout__staging__start-button"
           onClick={() => {
