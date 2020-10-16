@@ -50,11 +50,9 @@ export class Create extends React.Component<CreateProps, CreateState> {
   renderWorkoutSetInputs(workoutSet: WorkoutSet, index: number) {
     const updateWorkoutSet = (prop: string, value: any) => {
       let workoutSets = [...this.state.workoutSets];
-      if(prop in workoutSets[index]) {
-        // @ts-ignore
-        workoutSets[index][prop as keyof WorkoutSet] = value;
-        this.setState({workoutSets});
-      }
+      // @ts-ignore
+      workoutSets[index][prop as keyof WorkoutSet] = value;
+      this.setState({workoutSets});
     };
 
     const resetExerciseInputs = () => {
@@ -115,6 +113,9 @@ export class Create extends React.Component<CreateProps, CreateState> {
             updateWorkoutSet('restInterval', this.setRestIntervalRefs[index].value)
           }}
         />
+        <label>
+          Notes
+        </label>
         <input
           type="text"
           ref={setNotesRef => this.setNotesRefs[index] = setNotesRef as HTMLInputElement}
