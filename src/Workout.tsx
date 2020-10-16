@@ -4,6 +4,7 @@ import "firebase/auth";
 import "firebase/database";
 import {withRouter, RouteComponentProps} from "react-router";
 import {Link} from 'react-router-dom';
+import * as lodash from 'lodash';
 
 import {ExerciseLogging} from './ExerciseLogging';
 import {Exercise, Workout as WorkoutType, WorkoutSet, WorkoutSubset} from './types';
@@ -80,18 +81,26 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       this.setState({end});
     }
 
-    if(prevState.finishedSetIds !== this.state.finishedSetIds) {
+    const finishedSetIdsDidUpdate = prevState.finishedSetIds !== this.state.finishedSetIds;
+    const skippedSetIdsDidUpdate = prevState.skippedSetIds !== this.state.skippedSetIds;
+    if(finishedSetIdsDidUpdate || skippedSetIdsDidUpdate) {
+      const snoozedSetIds = lodash.difference(
+        this.state.snoozedSetIds,
+        this.state.finishedSetIds,
+        this.state.skippedSetIds,
+      );
       this.setState({
-        isResting: false,
-        currentWorkoutSetId: this.getNextWorkoutSetId(),
+        snoozedSetIds,
+        setsCompleted: this.state.setsCompleted + Number(finishedSetIdsDidUpdate),
         isFinished: this.isFinished(),
+        currentWorkoutSetId: this.getNextWorkoutSetId(),
+        isResting: false,
       });
     }
-    
-    if(prevState.skippedSetIds !== this.state.skippedSetIds) {
+
+    if(prevState.snoozedSetIds !== this.state.snoozedSetIds) {
       this.setState({
         currentWorkoutSetId: this.getNextWorkoutSetId(),
-        isFinished: this.isFinished(),
       });
     }
   }
@@ -102,26 +111,34 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
   }
 
   getNextWorkoutSetId(): string | null {
-    const {workout, finishedSetIds, skippedSetIds} = this.state;
+    const {workout, finishedSetIds, skippedSetIds, snoozedSetIds, currentWorkoutSetId} = this.state;
 
     if(!workout) {
       return null;
     }
 
-    let filteredWorkoutSets = {...workout.workoutSets};
+    let virginWorkoutSets = {...workout.workoutSets};
     finishedSetIds.forEach(finishedSetId => {
-      delete filteredWorkoutSets[finishedSetId];
+      delete virginWorkoutSets[finishedSetId];
     });
     skippedSetIds.forEach(skippedSetId => {
-      delete filteredWorkoutSets[skippedSetId];
+      delete virginWorkoutSets[skippedSetId];
+    });
+    snoozedSetIds.forEach(snoozedSetId => {
+      delete virginWorkoutSets[snoozedSetId];
     });
 
-    const workoutSetIds = Object.keys(filteredWorkoutSets);
-    if(workoutSetIds.length) {
-      return workoutSetIds[0];
-    } else {
-      return null;
+    const virginWorkoutSetIds = Object.keys(virginWorkoutSets);
+    if(virginWorkoutSetIds.length) {
+      return virginWorkoutSetIds[0];
     }
+
+    if(snoozedSetIds.length) {
+      const currentSnoozedIndex = lodash.indexOf(snoozedSetIds, currentWorkoutSetId);
+      return snoozedSetIds[currentSnoozedIndex + 1] || snoozedSetIds[0];
+    }
+
+    return null;
   }
 
   renderExerciseExecution(workoutSet: WorkoutSet, exercise: Exercise) {
@@ -161,14 +178,16 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
         >
           Skip
         </button>
-        <button
-          className="workout__active__snooze-button"
-          onClick={() => {
-            this.setState({snoozedSetIds: [...this.state.snoozedSetIds, this.state.currentWorkoutSetId]});
-          }}
-        >
-          Snooze
-        </button>
+        {this.state.snoozedSetIds.length > 1 || this.state.currentWorkoutSetId !== this.state.snoozedSetIds[0] && (
+          <button
+            className="workout__active__snooze-button"
+            onClick={() => {
+              this.setState({snoozedSetIds: [...this.state.snoozedSetIds, this.state.currentWorkoutSetId]});
+            }}
+          >
+            Snooze
+          </button>
+        )}
       </div>
     );
   }
@@ -235,8 +254,6 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
                 workoutSubsets.forEach(workoutSubset => subsetsRef.push().set(workoutSubset));
               }
               this.setState({
-                isResting: false,
-                setsCompleted: setsCompleted + 1,
                 finishedSetIds: [...finishedSetIds, currentWorkoutSetId],
               });
             }}
