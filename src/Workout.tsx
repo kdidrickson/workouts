@@ -22,6 +22,7 @@ interface WorkoutState {
   workoutLogRef?: firebase.database.Reference;
   isFinished: boolean;
   setsCompleted: number;
+  finishedSetIds: string[];
   skippedSetIds: string[];
   snoozedSetIds: string[];
   start?: number;
@@ -37,11 +38,13 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       isResting: false,
       isFinished: false,
       setsCompleted: 0,
+      finishedSetIds: [],
       skippedSetIds: [],
       snoozedSetIds: [],
     };
     this.renderActiveWorkout = this.renderActiveWorkout.bind(this);
     this.renderStagingWorkout = this.renderStagingWorkout.bind(this);
+    this.isFinished = this.isFinished.bind(this);
   }
 
   componentDidMount() {
@@ -76,27 +79,49 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       this.state.workoutLogRef.update({end});
       this.setState({end});
     }
+
+    if(prevState.finishedSetIds !== this.state.finishedSetIds) {
+      this.setState({
+        isResting: false,
+        currentWorkoutSetId: this.getNextWorkoutSetId(),
+        isFinished: this.isFinished(),
+      });
+    }
+    
+    if(prevState.skippedSetIds !== this.state.skippedSetIds) {
+      this.setState({
+        currentWorkoutSetId: this.getNextWorkoutSetId(),
+        isFinished: this.isFinished(),
+      });
+    }
+  }
+
+  isFinished() {
+    const {finishedSetIds, skippedSetIds, workout} = this.state;
+    return finishedSetIds.length + skippedSetIds.length >= Object.keys(workout.workoutSets).length;
   }
 
   getNextWorkoutSetId(): string | null {
-    const {workout, currentWorkoutSetId} = this.state;
+    const {workout, finishedSetIds, skippedSetIds} = this.state;
 
     if(!workout) {
       return null;
     }
 
-    const workoutSetIds = Object.keys(workout.workoutSets);
+    let filteredWorkoutSets = {...workout.workoutSets};
+    finishedSetIds.forEach(finishedSetId => {
+      delete filteredWorkoutSets[finishedSetId];
+    });
+    skippedSetIds.forEach(skippedSetId => {
+      delete filteredWorkoutSets[skippedSetId];
+    });
 
-    if(currentWorkoutSetId === null) {
+    const workoutSetIds = Object.keys(filteredWorkoutSets);
+    if(workoutSetIds.length) {
       return workoutSetIds[0];
-    }
-
-    const currentIndex = workoutSetIds.findIndex(id => id === currentWorkoutSetId);
-    if(currentIndex + 1 > workoutSetIds.length) {
+    } else {
       return null;
     }
-
-    return workoutSetIds[currentIndex+1];
   }
 
   renderExerciseExecution(workoutSet: WorkoutSet, exercise: Exercise) {
@@ -175,12 +200,14 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
 
   renderActiveWorkout() {
     const {
+      workout,
       exercises,
       currentWorkoutSetId,
       isResting,
       workoutLogRef,
       isFinished,
       setsCompleted,
+      finishedSetIds
     } = this.state;
     
     if(isFinished) {
@@ -191,7 +218,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       return 'Loading...';
     }
 
-    const currentWorkoutSet = this.state.workout.workoutSets[currentWorkoutSetId];
+    const currentWorkoutSet = workout.workoutSets[currentWorkoutSetId];
     const currentExercise = exercises[currentWorkoutSet.exerciseId];
 
     return (
@@ -207,12 +234,10 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
                 const subsetsRef = workoutLogRef.child(`workoutSets/${currentWorkoutSetId}/subsets`);
                 workoutSubsets.forEach(workoutSubset => subsetsRef.push().set(workoutSubset));
               }
-              const nextWorkoutSetId = this.getNextWorkoutSetId();
               this.setState({
                 isResting: false,
-                currentWorkoutSetId: nextWorkoutSetId,
-                isFinished: !nextWorkoutSetId,
                 setsCompleted: setsCompleted + 1,
+                finishedSetIds: [...finishedSetIds, currentWorkoutSetId],
               });
             }}
           /> :

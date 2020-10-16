@@ -67,7 +67,8 @@ export class ExerciseLogging extends React.Component<ExerciseLoggingProps, Exerc
           <button
             className="exercise-logging__add-logging-input-button"
             onClick={() => {
-              const subsets = [...this.state.subsets].splice(index, 1);
+              const subsets = [...this.state.subsets];
+              subsets.splice(index, 1);
               this.setState({subsets});
             }}
           >
