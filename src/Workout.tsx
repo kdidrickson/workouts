@@ -148,7 +148,76 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     return null;
   }
 
-  renderExerciseExecution(workoutSet: WorkoutSet, exercise: Exercise) {
+  renderWorkoutSetHistory(workoutLogs: {[key: string]: WorkoutLog}) {
+    const {currentWorkoutSetId} = this.state;
+
+    const hasHistory = Object.keys(workoutLogs).some(workoutLogId =>
+      workoutLogs[workoutLogId]
+      && workoutLogs[workoutLogId].workoutSets
+      && workoutLogs[workoutLogId].workoutSets[currentWorkoutSetId]
+    );
+    if(!hasHistory) {
+      return null;
+    }
+
+    return (
+      <div className="workout-set-history">
+        <h2 className="workout-set-history__header">
+          Recent history
+        </h2>
+        <div className="workout-set-history__sets">
+          {Object.keys(workoutLogs).reverse().map(workoutLogId => {
+            const {start, workoutSets} = workoutLogs[workoutLogId];
+            if(
+              !start
+              || !workoutSets
+              || !workoutSets[currentWorkoutSetId]
+              || (!workoutSets[currentWorkoutSetId].subsets && !workoutSets[currentWorkoutSetId].skipped)
+            ) {
+              return null;
+            }
+
+            const workoutSet = workoutSets[currentWorkoutSetId];
+
+            return (
+              <div className="workout-set-history__set">
+                <h3 className="workout-set-history__set__date">
+                  {new Date(start).toISOString().slice(0,10)}
+                </h3>
+                {workoutSet.skipped ? (
+                  <div className="workout-set-history__set__skipped">
+                    Skipped
+                  </div>
+                ) : (
+                  <div className="workout-set-history__set__subsets">
+                    {Object.keys(workoutSet.subsets).map(subsetId => {
+                      const subset = workoutSet.subsets[subsetId];
+                      if(!subset.reps || !subset.weight) {
+                        return null;
+                      }
+
+                      return (
+                        <div className="workout-set-history__set__subset">
+                          <div className="workout-set-history__set__subset__reps">
+                            {subset.reps}
+                          </div>
+                          <div className="workout-set-history__set__subset__weight">
+                            {subset.weight}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  renderExerciseExecution(workoutSet: WorkoutSet, exercise: Exercise, workoutLogs: {[key: string]: WorkoutLog} | null) {
     return (
       <div className="workout__active__exercise-execution">
         <div className="workout__active__target-reps">
@@ -185,7 +254,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
         >
           Skip
         </button>
-        {this.state.snoozedSetIds.length > 1 || this.state.currentWorkoutSetId !== this.state.snoozedSetIds[0] && (
+        {this.getNextWorkoutSetId() !== this.state.currentWorkoutSetId && (
           <button
             className="workout__active__snooze-button"
             onClick={() => {
@@ -195,6 +264,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
             Snooze
           </button>
         )}
+        {workoutLogs && this.renderWorkoutSetHistory(workoutLogs)}
       </div>
     );
   }
@@ -228,6 +298,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     const {
       workout,
       exercises,
+      workoutLogs,
       currentWorkoutSetId,
       isResting,
       workoutLogRef,
@@ -240,7 +311,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       return this.renderFinishedWorkout();
     }
 
-    if(!currentWorkoutSetId) {
+    if(!currentWorkoutSetId || workoutLogs === undefined) {
       return 'Loading...';
     }
 
@@ -253,7 +324,9 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
         {isResting ?
           <ExerciseLogging
             workoutSet={currentWorkoutSet}
+            workoutSetId={currentWorkoutSetId}
             exercise={currentExercise}
+            workoutLogs={workoutLogs}
             onSubmit={async (workoutSubsets: WorkoutSubset[]) => {
               if(workoutLogRef && currentWorkoutSetId) {
                 workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).set({setsCompleted});
@@ -265,7 +338,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
               });
             }}
           /> :
-          this.renderExerciseExecution(currentWorkoutSet, currentExercise)
+          this.renderExerciseExecution(currentWorkoutSet, currentExercise, workoutLogs)
         }
       </div>
     );

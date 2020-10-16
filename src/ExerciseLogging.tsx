@@ -1,11 +1,13 @@
 import React from 'react';
 import Countdown from 'react-countdown';
 
-import {Exercise, WorkoutSet, WorkoutSubset} from './types';
+import {Exercise, WorkoutSet, WorkoutSubset, WorkoutLog} from './types';
 
 interface ExerciseLoggingProps {
   exercise: Exercise;
   workoutSet: WorkoutSet;
+  workoutSetId: string;
+  workoutLogs: {[key: string]: WorkoutLog} | null;
   onSubmit: (workoutSubsets: WorkoutSubset[]) => void;
 }
 
