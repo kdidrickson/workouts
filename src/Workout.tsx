@@ -1,3 +1,5 @@
+import Container from 'react-bootstrap/Container';
+
 import React from 'react';
 import * as firebase from "firebase/app";
 import "firebase/auth";
@@ -8,7 +10,6 @@ import * as lodash from 'lodash';
 
 import {ExerciseLogging} from './ExerciseLogging';
 import {Exercise, Workout as WorkoutType, WorkoutSet, WorkoutSubset, WorkoutLog} from './types';
-import { last } from 'lodash';
 
 
 interface WorkoutProps extends RouteComponentProps<{id: string}> {

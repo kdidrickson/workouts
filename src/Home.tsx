@@ -1,9 +1,17 @@
+import './Home.scss';
+
+import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Card from 'react-bootstrap/Card';
+import Button from 'react-bootstrap/Button';
+
 import React from 'react';
 import * as firebase from "firebase/app";
 import "firebase/auth";
 import "firebase/database";
-import {Link} from "react-router-dom";
 import {Workout} from './types';
+import {PageLoadSpinner} from './PageLoadSpinner';
 
 interface HomeProps {
   user: firebase.User;
@@ -33,31 +41,50 @@ export class Home extends React.Component<HomeProps, HomeState> {
     });
   }
 
-  renderWorkouts() {
-    const {workouts} = this.state;
-
-    if(!workouts) {
-      return null;
-    }
-
+  renderWorkouts(workouts: Workout[]) {
     return (
       <div className="home__workouts">
+        <Row>
         {workouts.map(workout => (
-          <Link to={`/workout/${workout.id}`}>
-            {workout.name}
-          </Link>
+          <Col xs={12} md={4} lg={3}>
+            <div className="home__workout">
+              <Card>
+                <Card.Body>
+                  <Card.Title>{workout.name}</Card.Title>
+                  <Button href={`/workout/${workout.id}`} variant="primary">
+                    Open
+                  </Button>
+                </Card.Body>
+                <Card.Footer className="text-muted small">
+                  {`Last accessed: ${new Date(workout.lastAccessed).toISOString().slice(0, 10)}`}
+                </Card.Footer>
+              </Card>
+            </div>
+          </Col>
         ))}
+        </Row>
       </div>
     );
   }
 
   render() {
+    const {workouts} = this.state;
     return (
       <div className="home">
-        {this.renderWorkouts()}
-        <Link to="/create">
-          Create a new workout
-        </Link>
+        {!workouts ? <PageLoadSpinner /> : (
+          <Container>
+            {this.renderWorkouts(workouts)}
+            <div className="home__create-button">
+              <Row>
+                <Col xs={12}>
+                  <Button size="lg" href="/create" block>
+                    Create a new workout
+                  </Button>
+                </Col>
+              </Row>
+            </div>
+          </Container>
+        )}
       </div>
     );
   }

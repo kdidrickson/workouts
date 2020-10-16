@@ -21,6 +21,7 @@ export interface Workout {
   id?: string;
   name?: string;
   workoutSets: WorkoutSet[];
+  lastAccessed?: number;
 };
 
 export interface WorkoutLogSet {

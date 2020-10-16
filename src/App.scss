@@ -1,0 +1,21 @@
+@import "~bootstrap/scss/bootstrap";
+
+.app-navbar {
+  margin-bottom: map-get($spacers, 3);
+}
+
+.logout-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: white;
+  margin-left: map-get($spacers, 2);
+
+  &:before {
+    content: '[';
+  }
+
+  &:after {
+    content: ']';
+  }
+}
