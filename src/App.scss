@@ -1,7 +1,11 @@
 @import "~bootstrap/scss/bootstrap";
 
+.app {
+  margin-bottom: 4em;
+}
+
 .app-navbar {
-  margin-bottom: map-get($spacers, 3);
+  margin-bottom: map-get($spacers, 5);
 }
 
 .logout-button {

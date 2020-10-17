@@ -33,10 +33,15 @@ export class Home extends React.Component<HomeProps, HomeState> {
   componentDidMount() {
     const {user: {uid}} = this.props;
     firebase.database().ref(`workouts/${uid}`).orderByChild('lastAccessed').on('value', (snapshot) => {
-      const workoutsSnapshot = snapshot.val();
-      if(workoutsSnapshot) {
-        const workouts = Object.keys(workoutsSnapshot).reverse().map(id => ({id, ...workoutsSnapshot[id]}));
-        this.setState({workouts});
+      if(snapshot.val()) {
+        let workouts: Workout[] = [];
+        snapshot.forEach(child => {
+          workouts.push({
+            id: child.key,
+            ...child.val()
+          });
+        });
+        this.setState({workouts: workouts.reverse()});
       }
     });
   }
