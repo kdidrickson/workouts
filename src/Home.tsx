@@ -61,7 +61,10 @@ export class Home extends React.Component<HomeProps, HomeState> {
                   </Button>
                 </Card.Body>
                 <Card.Footer className="text-muted small">
-                  {`Last accessed: ${new Date(workout.lastAccessed).toISOString().slice(0, 10)}`}
+                  {workout.lastAccessed ?
+                    `Last accessed: ${new Date(workout.lastAccessed).toISOString().slice(0, 10)}` :
+                    `Never accessed`
+                  }
                 </Card.Footer>
               </Card>
             </div>
