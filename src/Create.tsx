@@ -26,7 +26,7 @@ interface CreateState {
   name?: string;
   exercises: Exercise[];
   workoutSets: WorkoutSet[];
-  isModalOpen: boolean;
+  isModalOpen: boolean | number;
   modalError: string | null;
 }
 
@@ -113,7 +113,7 @@ export class Create extends React.Component<CreateProps, CreateState> {
                     // @ts-ignore
                     onChange={({value}) => {
                       if(value === 'new') {
-                        this.setState({isModalOpen: true});
+                        this.setState({isModalOpen: index});
                       } else {
                         updateWorkoutSet('exerciseId', value);
                       }
@@ -177,13 +177,24 @@ export class Create extends React.Component<CreateProps, CreateState> {
                 >
                   Remove
                 </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    let workoutSets = [...this.state.workoutSets];
+                    workoutSets.splice(index + 1, 0, workoutSets[index]);
+                    this.setState({workoutSets});
+                  }}
+                >
+                  Copy
+                </Button>
               </Col>
             </Row>
           </Card.Footer>
         </Card>
         
         <Modal
-          show={this.state.isModalOpen}
+          show={this.state.isModalOpen === index}
           onHide={onModalHide}
         >
           <Modal.Header>
@@ -229,7 +240,6 @@ export class Create extends React.Component<CreateProps, CreateState> {
             <Button
               variant="primary"
               onClick={() => {
-                console.log(this.exerciseNameInputRef.value);
                 if(this.exerciseNameInputRef && this.exerciseNameInputRef.value !== '') {
                   this.setState({
                     isModalOpen: false,
