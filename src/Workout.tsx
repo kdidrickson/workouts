@@ -1,4 +1,9 @@
 import Container from 'react-bootstrap/Container';
+import Row from 'react-bootstrap/Row';
+import Col from 'react-bootstrap/Col';
+import Alert from 'react-bootstrap/Alert';
+import Card from 'react-bootstrap/Card';
+import Button from 'react-bootstrap/Button';
 
 import React from 'react';
 import * as firebase from "firebase/app";
@@ -10,6 +15,7 @@ import * as lodash from 'lodash';
 
 import {ExerciseLogging} from './ExerciseLogging';
 import {Exercise, Workout as WorkoutType, WorkoutSet, WorkoutSubset, WorkoutLog} from './types';
+import {PageLoadSpinner} from './PageLoadSpinner';
 
 
 interface WorkoutProps extends RouteComponentProps<{id: string}> {
@@ -55,12 +61,17 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     firebase.database().ref(
       `workouts/${this.props.user.uid}/${this.props.match.params.id}`
     ).once('value', (snapshot) => {
-      this.setState({workout: snapshot.val()});
-    });
-    firebase.database().ref(
-      `workouts/${this.props.user.uid}/${this.props.match.params.id}`
-    ).update({
-      lastAccessed: Date.now(),
+      const workout = snapshot.val();
+      if(workout && workout.name && workout.workoutSets) {
+        this.setState({workout});
+        firebase.database().ref(
+          `workouts/${this.props.user.uid}/${this.props.match.params.id}`
+        ).update({
+          lastAccessed: Date.now(),
+        });
+      } else {
+        this.setState({workout: null});
+      }
     });
     firebase.database().ref(
       `exercises/${this.props.user.uid}`
@@ -368,38 +379,54 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     const {user, match: {params}} = this.props;
 
     if(workout === null) {
-      return `Couldn't find workout!`;
+      return (
+        <Alert variant="warning">
+          {`This workout doesn't exist!`}
+        </Alert>
+      );
     }
 
     if(!workout || !exercises || workoutLogs === undefined) {
-      return `Loading...`;
+      return <PageLoadSpinner />
     }
 
     return (
       <div className="workout__staging">
-        <h1>{workout.name}</h1>
-        <div className="workout__history-summary">
-          {this.renderWorkoutHistorySummary(workoutLogs)}
-        </div>
-        <button
-          className="workout__staging__start-button"
-          onClick={() => {
-            this.setState({isRunning: true});
-          }}
-        >
-          Start workout
-        </button>
-        <button
-          className="workout__staging__delete-button"
-          onClick={() => {
-            const workoutRef = firebase.database().ref(`workouts/${user.uid}/${params.id}`);
-            workoutRef.remove().then(() => {
-              window.location.pathname = '/';
-            })
-          }}
-        >
-          Delete workout
-        </button>
+        <Card>
+          <Card.Body>
+            <Card.Title>
+              <div className="workout__staging__header">
+                {workout.name}
+              </div>
+            </Card.Title>
+            <div className="workout__history-summary">
+              {this.renderWorkoutHistorySummary(workoutLogs)}
+            </div>
+          </Card.Body>
+          <Card.Footer>
+            <Button
+              variant="primary"
+              className="workout__staging__start-button"
+              onClick={() => {
+                this.setState({isRunning: true});
+              }}
+            >
+              Start workout
+            </Button>
+            <Button
+              variant="danger"
+              className="workout__staging__delete-button float-right"
+              onClick={() => {
+                const workoutRef = firebase.database().ref(`workouts/${user.uid}/${params.id}`);
+                workoutRef.remove().then(() => {
+                  window.location.pathname = '/';
+                })
+              }}
+            >
+              Delete workout
+            </Button>
+          </Card.Footer>
+        </Card>
       </div>
     );
   }
@@ -407,7 +434,13 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
   render() {
     return (
       <div className="workout">
-        {this.state.isRunning ? this.renderActiveWorkout() : this.renderStagingWorkout()}
+        <Container>
+          <Row>
+            <Col xs={12}>
+              {this.state.isRunning ? this.renderActiveWorkout() : this.renderStagingWorkout()}
+            </Col>
+          </Row>
+        </Container>
       </div>
     );
   }
