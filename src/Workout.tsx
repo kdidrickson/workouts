@@ -1,9 +1,13 @@
+import './Workout.scss';
+
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Alert from 'react-bootstrap/Alert';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
+import ListGroup from 'react-bootstrap/ListGroup';
+import Table from 'react-bootstrap/Table';
 
 import React from 'react';
 import * as firebase from "firebase/app";
@@ -134,8 +138,13 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     return finishedSetIds.length + skippedSetIds.length >= Object.keys(workout.workoutSets).length;
   }
 
-  getNextWorkoutSetId(): string | null {
-    const {workout, finishedSetIds, skippedSetIds, snoozedSetIds, currentWorkoutSetId} = this.state;
+  getNextWorkoutSetId(simulateSnoozed?: string): string | null {
+    const {workout, finishedSetIds, skippedSetIds, currentWorkoutSetId} = this.state;
+    let {snoozedSetIds} = this.state;
+
+    if(simulateSnoozed) {
+      snoozedSetIds = [...snoozedSetIds, simulateSnoozed];
+    }
 
     if(!workout) {
       return null;
@@ -179,110 +188,130 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
 
     return (
       <div className="workout-set-history">
-        <h2 className="workout-set-history__header">
-          Recent history
-        </h2>
-        <div className="workout-set-history__sets">
-          {Object.keys(workoutLogs).reverse().map(workoutLogId => {
-            const {start, workoutSets} = workoutLogs[workoutLogId];
-            if(
-              !start
-              || !workoutSets
-              || !workoutSets[currentWorkoutSetId]
-              || (!workoutSets[currentWorkoutSetId].subsets && !workoutSets[currentWorkoutSetId].skipped)
-            ) {
-              return null;
-            }
+        <Card>
+          <Card.Body>
+            <Card.Title>
+              Recent History
+            </Card.Title>
+            <Card.Text>
+              <ListGroup variant="flush">
+                {Object.keys(workoutLogs).reverse().map(workoutLogId => {
+                  const {start, workoutSets} = workoutLogs[workoutLogId];
+                  if(
+                    !start
+                    || !workoutSets
+                    || !workoutSets[currentWorkoutSetId]
+                    || (!workoutSets[currentWorkoutSetId].subsets && !workoutSets[currentWorkoutSetId].skipped)
+                  ) {
+                    return null;
+                  }
 
-            const workoutSet = workoutSets[currentWorkoutSetId];
+                  const workoutSet = workoutSets[currentWorkoutSetId];
 
-            return (
-              <div className="workout-set-history__set">
-                <h3 className="workout-set-history__set__date">
-                  {new Date(start).toISOString().slice(0,10)}
-                </h3>
-                {workoutSet.skipped ? (
-                  <div className="workout-set-history__set__skipped">
-                    Skipped
-                  </div>
-                ) : (
-                  <div className="workout-set-history__set__subsets">
-                    {Object.keys(workoutSet.subsets).map(subsetId => {
-                      const subset = workoutSet.subsets[subsetId];
-                      if(!subset.reps || !subset.weight) {
-                        return null;
-                      }
-
-                      return (
-                        <div className="workout-set-history__set__subset">
-                          <div className="workout-set-history__set__subset__reps">
-                            {subset.reps}
-                          </div>
-                          <div className="workout-set-history__set__subset__weight">
-                            {subset.weight}
-                          </div>
+                  return (
+                    <ListGroup.Item>
+                      <h6 className="workout-set-history__set__date">
+                        {new Date(start).toISOString().slice(0,10)}
+                      </h6>
+                      {workoutSet.skipped ? (
+                        <div className="workout-set-history__set__skipped">
+                          Skipped
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                      ) : (
+                        <div className="workout-set-history__set__subsets">
+                          <Table striped bordered hover size="sm">
+                            <thead>
+                              <tr>
+                                <th>#</th>
+                                <th>Reps</th>
+                                <th>Sets</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {Object.keys(workoutSet.subsets).map((subsetId, index) => {
+                                const subset = workoutSet.subsets[subsetId];
+                                if(!subset.reps || !subset.weight) {
+                                  return null;
+                                }
+    
+                                return (
+                                  <tr>
+                                    <td>{index + 1}</td>
+                                    <td>{subset.reps}</td>
+                                    <td>{subset.weight}</td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </Table>
+                        </div>
+                      )}
+                    </ListGroup.Item>
+                  );
+                })}
+              </ListGroup>
+            </Card.Text>
+          </Card.Body>
+        </Card>
       </div>
     );
   }
 
-  renderExerciseExecution(workoutSet: WorkoutSet, exercise: Exercise, workoutLogs: {[key: string]: WorkoutLog} | null) {
+  renderExerciseExecution(workoutSet: WorkoutSet, exercise: Exercise) {
     return (
       <div className="workout__active__exercise-execution">
-        <div className="workout__active__target-reps">
-          {`${workoutSet.targetReps} reps`}
-        </div>
-        {exercise.youtubeUrl && (
-          <div className="workout__active__youtube">
-            <iframe
-              frameBorder="0"
-              scrolling="no"
-              src={`${exercise.youtubeUrl}?autoplay=0&fs=0&iv_load_policy=3&showinfo=0&rel=0&cc_load_policy=0&start=0&end=0&origin=https://youtubeembedcode.com`}
-            />
-          </div>
-        )}
+        <p className="workout__active__target-reps">
+          {`Target: ${workoutSet.targetReps} rep${workoutSet.targetReps === 1 ? '' : 's'}`}
+        </p>
         {exercise.notes && <p className="workout__active__notes">{exercise.notes}</p>}
-        <button
+        <p className="workout__active__more-info">
+          <a href={exercise.youtubeUrl} target="_blank">
+            More info
+          </a>
+        </p>
+      </div>
+    );
+  }
+
+  renderExerciseExecutionActions() {
+    const {currentWorkoutSetId, skippedSetIds, snoozedSetIds, workoutLogRef} = this.state;
+    return (
+      <>
+        <Button
+          variant="primary"
           className="workout__active__done-button"
           onClick={() => {
             this.setState({isResting: true});
           }}
         >
           Done!
-        </button>
-        <button
-          className="workout__active__skip-button"
+        </Button>
+        <Button
+          variant="secondary"
+          className="workout__active__skip-button float-right"
           onClick={() => {
-            this.setState({skippedSetIds: [...this.state.skippedSetIds, this.state.currentWorkoutSetId]});
-            if(this.state.workoutLogRef) {
-              this.state.workoutLogRef.child(`workoutSets/${this.state.currentWorkoutSetId}`).update({
+            this.setState({skippedSetIds: [...skippedSetIds, currentWorkoutSetId]});
+            if(workoutLogRef) {
+              workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).update({
                 skipped: true,
               })
             }
           }}
         >
           Skip
-        </button>
-        {this.getNextWorkoutSetId() !== this.state.currentWorkoutSetId && (
-          <button
-            className="workout__active__snooze-button"
+        </Button>
+        {this.getNextWorkoutSetId(currentWorkoutSetId) !== currentWorkoutSetId && (
+          <Button
+            variant="warning"
+            className="workout__active__snooze-button float-right"
             onClick={() => {
-              this.setState({snoozedSetIds: [...this.state.snoozedSetIds, this.state.currentWorkoutSetId]});
+              this.setState({snoozedSetIds: [...snoozedSetIds, currentWorkoutSetId]});
             }}
           >
             Snooze
-          </button>
+          </Button>
         )}
-        {workoutLogs && this.renderWorkoutSetHistory(workoutLogs)}
-      </div>
+      </>
     );
   }
 
@@ -329,7 +358,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     }
 
     if(!currentWorkoutSetId || workoutLogs === undefined) {
-      return 'Loading...';
+      return <PageLoadSpinner />
     }
 
     const currentWorkoutSet = workout.workoutSets[currentWorkoutSetId];
@@ -337,26 +366,36 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
 
     return (
       <div className="workout__active">
-        <h1>{currentExercise.name}</h1>
-        {isResting ?
-          <ExerciseLogging
-            workoutSet={currentWorkoutSet}
-            workoutSetId={currentWorkoutSetId}
-            exercise={currentExercise}
-            workoutLogs={workoutLogs}
-            onSubmit={async (workoutSubsets: WorkoutSubset[]) => {
-              if(workoutLogRef && currentWorkoutSetId) {
-                workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).set({setsCompleted});
-                const subsetsRef = workoutLogRef.child(`workoutSets/${currentWorkoutSetId}/subsets`);
-                workoutSubsets.forEach(workoutSubset => subsetsRef.push().set(workoutSubset));
-              }
-              this.setState({
-                finishedSetIds: [...finishedSetIds, currentWorkoutSetId],
-              });
-            }}
-          /> :
-          this.renderExerciseExecution(currentWorkoutSet, currentExercise, workoutLogs)
-        }
+        <Card>
+          <Card.Body>
+            <Card.Title>
+              {currentExercise.name}
+            </Card.Title>
+            {isResting ?
+              <ExerciseLogging
+                workoutSet={currentWorkoutSet}
+                workoutSetId={currentWorkoutSetId}
+                exercise={currentExercise}
+                workoutLogs={workoutLogs}
+                onSubmit={async (workoutSubsets: WorkoutSubset[]) => {
+                  if(workoutLogRef && currentWorkoutSetId) {
+                    workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).set({setsCompleted});
+                    const subsetsRef = workoutLogRef.child(`workoutSets/${currentWorkoutSetId}/subsets`);
+                    workoutSubsets.forEach(workoutSubset => subsetsRef.push().set(workoutSubset));
+                  }
+                  this.setState({
+                    finishedSetIds: [...finishedSetIds, currentWorkoutSetId],
+                  });
+                }}
+              /> :
+              this.renderExerciseExecution(currentWorkoutSet, currentExercise)
+            }
+          </Card.Body>
+          <Card.Footer>
+            {isResting ? null : this.renderExerciseExecutionActions()}
+          </Card.Footer>
+        </Card>
+        {workoutLogs && this.renderWorkoutSetHistory(workoutLogs)}
       </div>
     );
   }
