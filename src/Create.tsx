@@ -178,6 +178,7 @@ export class Create extends React.Component<CreateProps, CreateState> {
                   Remove
                 </Button>
                 <Button
+                  className="ml-3"
                   variant="secondary"
                   size="sm"
                   onClick={() => {

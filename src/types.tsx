@@ -20,7 +20,7 @@ export interface WorkoutSubset {
 export interface Workout {
   id?: string;
   name?: string;
-  workoutSets: WorkoutSet[];
+  workoutSets: {[key: string]: WorkoutSet};
   lastAccessed?: number;
 };
 

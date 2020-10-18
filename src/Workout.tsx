@@ -18,6 +18,7 @@ import {Link} from 'react-router-dom';
 import * as lodash from 'lodash';
 
 import {ExerciseLogging} from './ExerciseLogging';
+import {WorkoutSummary} from './WorkoutSummary';
 import {Exercise, Workout as WorkoutType, WorkoutSet, WorkoutSubset, WorkoutLog} from './types';
 import {PageLoadSpinner} from './PageLoadSpinner';
 
@@ -92,7 +93,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
   }
 
   componentDidUpdate(prevProps: WorkoutProps, prevState: WorkoutState) {
-    if(!prevState.workout && this.state.workout) {
+    if(this.state.workout && !prevState.isRunning && this.state.isRunning) {
       this.setState({
         currentWorkoutSetId: this.getNextWorkoutSetId(),
       });
@@ -108,7 +109,10 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     if(!prevState.isFinished && this.state.isFinished && this.state.workoutLogRef) {
       const end = Date.now();
       this.state.workoutLogRef.update({end});
-      this.setState({end});
+      this.setState({
+        end,
+        currentWorkoutSetId: null,
+      });
     }
 
     const finishedSetIdsDidUpdate = prevState.finishedSetIds !== this.state.finishedSetIds;
@@ -387,10 +391,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       workoutLogs,
       currentWorkoutSetId,
       isResting,
-      workoutLogRef,
       isFinished,
-      setsCompleted,
-      finishedSetIds
     } = this.state;
     
     if(isFinished) {
@@ -456,10 +457,6 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       );
     }
 
-    if(!workout || !exercises || workoutLogs === undefined) {
-      return <PageLoadSpinner />
-    }
-
     return (
       <div className="workout__staging">
         <Card>
@@ -502,15 +499,33 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
   }
 
   render() {
+    const {workout, exercises, workoutLogs} = this.state;
+    
     return (
       <div className="workout">
-        <Container>
-          <Row>
-            <Col xs={12}>
-              {this.state.isRunning ? this.renderActiveWorkout() : this.renderStagingWorkout()}
-            </Col>
-          </Row>
-        </Container>
+        {!workout || !exercises || workoutLogs === undefined ? <PageLoadSpinner /> : (
+          <Container>
+            <Row>
+              <Col xs={12}>
+                {this.state.isRunning ? this.renderActiveWorkout() : this.renderStagingWorkout()}
+              </Col>
+            </Row>
+            <Row>
+              <Col xs={12}>
+                <div className="workout__workout-summary mt-5">
+                  <WorkoutSummary
+                    workout={workout}
+                    exercises={exercises}
+                    currentWorkoutSetId={this.state.currentWorkoutSetId}
+                    finishedSetIds={this.state.finishedSetIds}
+                    skippedSetIds={this.state.skippedSetIds}
+                    snoozedSetIds={this.state.snoozedSetIds}
+                  />
+                </div>
+              </Col>
+            </Row>
+          </Container>
+        )}
       </div>
     );
   }

@@ -1,0 +1,26 @@
+.workout-summary__set {
+  &--finished {
+    background: lightgreen;
+    color: grey;
+  }
+
+  &--skipped {
+    background: lightgrey;
+    color: grey;
+    text-decoration: line-through;
+  }
+
+  &--snoozed {
+    background: lightgoldenrodyellow;
+    color: grey;
+  }
+
+  &--current {
+    font-weight: bold;
+
+    &:before {
+      content: '>';
+      margin-right: 0.5rem;
+    }
+  }
+}
