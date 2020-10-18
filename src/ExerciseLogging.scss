@@ -1,0 +1,30 @@
+@keyframes flash {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.exercise-logging__countdown {
+  font-size: 3.5rem;
+  font-weight: bold;
+  text-align: center;
+  background: black;
+  color: red;
+  border-radius: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 1rem;
+  line-height: 1;
+  margin-bottom: 2rem;
+
+  &--complete {
+    animation: flash 1s step-end infinite;
+    opacity: 1;
+  }
+}
+
+.exercise-logging__add-logging-input-button,
+.exercise-logging__add-logging-input-button {
+  margin-left: 1rem;
+  margin-top: 1rem;
+}

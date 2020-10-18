@@ -41,6 +41,7 @@ interface WorkoutState {
   snoozedSetIds: string[];
   start?: number;
   end?: number;
+  loggingSubsets: WorkoutSubset[];
 }
 
 class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
@@ -55,6 +56,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       finishedSetIds: [],
       skippedSetIds: [],
       snoozedSetIds: [],
+      loggingSubsets: [],
     };
     this.renderActiveWorkout = this.renderActiveWorkout.bind(this);
     this.renderStagingWorkout = this.renderStagingWorkout.bind(this);
@@ -264,12 +266,50 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
           {`Target: ${workoutSet.targetReps} rep${workoutSet.targetReps === 1 ? '' : 's'}`}
         </p>
         {exercise.notes && <p className="workout__active__notes">{exercise.notes}</p>}
-        <p className="workout__active__more-info">
-          <a href={exercise.youtubeUrl} target="_blank">
-            More info
-          </a>
-        </p>
+        {exercise.youtubeUrl && (
+          <p className="workout__active__more-info">
+            <a href={exercise.youtubeUrl} target="_blank">
+              More info
+            </a>
+          </p>
+        )}
       </div>
+    );
+  }
+
+  renderExerciseLoggingActions() {
+    const {
+      loggingSubsets,
+      workoutLogRef,
+      currentWorkoutSetId,
+      setsCompleted,
+      finishedSetIds
+    } = this.state;
+
+    if(loggingSubsets.length && loggingSubsets.every(({reps, weight}) => reps && weight)) {
+      return (
+        <Button
+          className="exercise-logging__submit-button"
+          onClick={async () => {
+            if(workoutLogRef && currentWorkoutSetId) {
+              workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).set({setsCompleted});
+              const subsetsRef = workoutLogRef.child(`workoutSets/${currentWorkoutSetId}/subsets`);
+              loggingSubsets.forEach(workoutSubset => subsetsRef.push().set(workoutSubset));
+            }
+            this.setState({
+              finishedSetIds: [...finishedSetIds, currentWorkoutSetId],
+            });
+          }}
+        >
+          Proceed
+        </Button>
+      )
+    }
+
+    return (
+      <Alert variant="info" className="exercise-logging__alert">
+        {`You must complete all the logging fields to continue.`}
+      </Alert>
     );
   }
 
@@ -374,25 +414,16 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
             {isResting ?
               <ExerciseLogging
                 workoutSet={currentWorkoutSet}
-                workoutSetId={currentWorkoutSetId}
                 exercise={currentExercise}
-                workoutLogs={workoutLogs}
-                onSubmit={async (workoutSubsets: WorkoutSubset[]) => {
-                  if(workoutLogRef && currentWorkoutSetId) {
-                    workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).set({setsCompleted});
-                    const subsetsRef = workoutLogRef.child(`workoutSets/${currentWorkoutSetId}/subsets`);
-                    workoutSubsets.forEach(workoutSubset => subsetsRef.push().set(workoutSubset));
-                  }
-                  this.setState({
-                    finishedSetIds: [...finishedSetIds, currentWorkoutSetId],
-                  });
+                onSubsetInputChange={(loggingSubsets) => {
+                  this.setState({loggingSubsets});
                 }}
               /> :
               this.renderExerciseExecution(currentWorkoutSet, currentExercise)
             }
           </Card.Body>
           <Card.Footer>
-            {isResting ? null : this.renderExerciseExecutionActions()}
+            {isResting ? this.renderExerciseLoggingActions() : this.renderExerciseExecutionActions()}
           </Card.Footer>
         </Card>
         {workoutLogs && this.renderWorkoutSetHistory(workoutLogs)}
