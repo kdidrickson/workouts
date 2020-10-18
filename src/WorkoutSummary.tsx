@@ -2,16 +2,18 @@ import './WorkoutSummary.scss';
 
 import ListGroup from 'react-bootstrap/ListGroup';
 import Accordion from 'react-bootstrap/Accordion';
+import Card from 'react-bootstrap/Card';
 
 import React from 'react';
 import lodash from 'lodash';
 
-import {Workout, Exercise} from './types';
+import {Workout, Exercise, WorkoutLog} from './types';
+import {WorkoutSetHistory} from './WorkoutSetHistory';
 
 export interface WorkoutSummaryProps {
   workout: Workout;
   exercises: {[key: string]: Exercise};
-  workoutLogs: {[key: string]: WorkoutLog} | null;
+  workoutLogs?: {[key: string]: WorkoutLog} | null;
   currentWorkoutSetId?: string;
   finishedSetIds?: string[];
   skippedSetIds?: string[];
@@ -28,6 +30,7 @@ export class WorkoutSummary extends React.Component<WorkoutSummaryProps, {}> {
     const {
       workout: {workoutSets},
       exercises,
+      workoutLogs,
       currentWorkoutSetId,
       finishedSetIds,
       skippedSetIds,
@@ -70,10 +73,22 @@ export class WorkoutSummary extends React.Component<WorkoutSummaryProps, {}> {
             `}
           >
             {`${exercise.name}${workoutSet.targetReps ? ` x ${workoutSet.targetReps}` : ''}`}
+            {workoutLogs && (
+              <Accordion.Collapse eventKey={String(index)}>
+                <div className="workout-summary__set__history mt-3">
+                  <h6>
+                    Recent History
+                  </h6>
+                  <Card>
+                    <WorkoutSetHistory
+                      workoutSetId={workoutSetId}
+                      workoutLogs={workoutLogs}
+                    />
+                  </Card>
+                </div>
+              </Accordion.Collapse>
+            )}
           </Accordion.Toggle>
-          <Accordion.Collapse>
-            
-          </Accordion.Collapse>
         </Accordion>
       );
     });

@@ -39,6 +39,7 @@
         "$workoutLog": {
           "start": {".validate": "true"},
           "end": {".validate": "true"},
+          "workoutId": {".validate": "true"},
           "workoutSets": {
             "$workoutSetLog": {
               "setsCompleted": {".validate": "true"},

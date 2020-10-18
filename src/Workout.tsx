@@ -6,8 +6,6 @@ import Col from 'react-bootstrap/Col';
 import Alert from 'react-bootstrap/Alert';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
-import ListGroup from 'react-bootstrap/ListGroup';
-import Table from 'react-bootstrap/Table';
 
 import React from 'react';
 import * as firebase from "firebase/app";
@@ -21,6 +19,7 @@ import {ExerciseLogging} from './ExerciseLogging';
 import {WorkoutSummary} from './WorkoutSummary';
 import {Exercise, Workout as WorkoutType, WorkoutSet, WorkoutSubset, WorkoutLog} from './types';
 import {PageLoadSpinner} from './PageLoadSpinner';
+import { WorkoutSetHistory } from './WorkoutSetHistory';
 
 
 interface WorkoutProps extends RouteComponentProps<{id: string}> {
@@ -87,7 +86,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     });
     firebase.database().ref(
       `workoutLogs/${this.props.user.uid}`
-    ).limitToLast(3).on('value', (snapshot) => {
+    ).orderByChild('workoutId').equalTo(this.props.match.params.id).limitToLast(3).on('value', (snapshot) => {
       this.setState({workoutLogs: snapshot.val()});
     });
   }
@@ -102,7 +101,10 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     if(!prevState.isRunning && this.state.isRunning) {
       const workoutLogRef = firebase.database().ref(`workoutLogs/${this.props.user.uid}`).push();
       const start = Date.now()
-      workoutLogRef.set({start})
+      workoutLogRef.set({
+        start,
+        workoutId: this.props.match.params.id,
+      })
       this.setState({workoutLogRef, start});
     }
 
@@ -181,86 +183,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
   }
 
   renderWorkoutSetHistory(workoutLogs: {[key: string]: WorkoutLog}) {
-    const {currentWorkoutSetId} = this.state;
-
-    const hasHistory = Object.keys(workoutLogs).some(workoutLogId =>
-      workoutLogs[workoutLogId]
-      && workoutLogs[workoutLogId].workoutSets
-      && workoutLogs[workoutLogId].workoutSets[currentWorkoutSetId]
-    );
-    if(!hasHistory) {
-      return null;
-    }
-
-    return (
-      <div className="workout-set-history">
-        <Card>
-          <Card.Body>
-            <Card.Title>
-              Recent History
-            </Card.Title>
-            <Card.Text>
-              <ListGroup variant="flush">
-                {Object.keys(workoutLogs).reverse().map(workoutLogId => {
-                  const {start, workoutSets} = workoutLogs[workoutLogId];
-                  if(
-                    !start
-                    || !workoutSets
-                    || !workoutSets[currentWorkoutSetId]
-                    || (!workoutSets[currentWorkoutSetId].subsets && !workoutSets[currentWorkoutSetId].skipped)
-                  ) {
-                    return null;
-                  }
-
-                  const workoutSet = workoutSets[currentWorkoutSetId];
-
-                  return (
-                    <ListGroup.Item>
-                      <h6 className="workout-set-history__set__date">
-                        {new Date(start).toISOString().slice(0,10)}
-                      </h6>
-                      {workoutSet.skipped ? (
-                        <div className="workout-set-history__set__skipped">
-                          Skipped
-                        </div>
-                      ) : (
-                        <div className="workout-set-history__set__subsets">
-                          <Table striped bordered hover size="sm">
-                            <thead>
-                              <tr>
-                                <th>#</th>
-                                <th>Reps</th>
-                                <th>Sets</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {Object.keys(workoutSet.subsets).map((subsetId, index) => {
-                                const subset = workoutSet.subsets[subsetId];
-                                if(!subset.reps || !subset.weight) {
-                                  return null;
-                                }
     
-                                return (
-                                  <tr>
-                                    <td>{index + 1}</td>
-                                    <td>{subset.reps}</td>
-                                    <td>{subset.weight}</td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </Table>
-                        </div>
-                      )}
-                    </ListGroup.Item>
-                  );
-                })}
-              </ListGroup>
-            </Card.Text>
-          </Card.Body>
-        </Card>
-      </div>
-    );
   }
 
   renderExerciseExecution(workoutSet: WorkoutSet, exercise: Exercise) {
@@ -405,6 +328,13 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     const currentWorkoutSet = workout.workoutSets[currentWorkoutSetId];
     const currentExercise = exercises[currentWorkoutSet.exerciseId];
 
+    const workoutSetHistory = workoutLogs && (
+      <WorkoutSetHistory
+        workoutSetId={currentWorkoutSetId}
+        workoutLogs={workoutLogs}
+      />
+    );
+
     return (
       <div className="workout__active">
         <Card>
@@ -427,7 +357,20 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
             {isResting ? this.renderExerciseLoggingActions() : this.renderExerciseExecutionActions()}
           </Card.Footer>
         </Card>
-        {workoutLogs && this.renderWorkoutSetHistory(workoutLogs)}
+        {workoutSetHistory && (
+          <div className="workout__workout-set-history mt-5">
+            <Card>
+              <Card.Body>
+                <Card.Title>
+                  Recent History
+                </Card.Title>
+                <Card.Text>
+                  {workoutSetHistory}
+                </Card.Text>
+              </Card.Body>
+            </Card>
+          </div>
+        )}
       </div>
     );
   }
@@ -516,6 +459,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
                   <WorkoutSummary
                     workout={workout}
                     exercises={exercises}
+                    workoutLogs={workoutLogs}
                     currentWorkoutSetId={this.state.currentWorkoutSetId}
                     finishedSetIds={this.state.finishedSetIds}
                     skippedSetIds={this.state.skippedSetIds}
