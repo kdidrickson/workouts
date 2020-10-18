@@ -54,7 +54,10 @@ export class Create extends React.Component<CreateProps, CreateState> {
     this.nameInputRef && this.nameInputRef.focus();
     firebase.database().ref(`exercises/${this.props.user.uid}`).on('value', (snapshot) => {
       const exercisesList = snapshot.val();
-      const exercises = Object.keys(exercisesList).map(id => ({id, ...exercisesList[id]}));
+      let exercises = [];
+      if(exercisesList) {
+        exercises = Object.keys(exercisesList).map(id => ({id, ...exercisesList[id]}));
+      }
       this.setState({exercises});
     });
   }

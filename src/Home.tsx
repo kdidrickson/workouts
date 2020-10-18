@@ -18,31 +18,31 @@ interface HomeProps {
 }
 
 interface HomeState {
-  workouts: Workout[] | null;
+  workouts?: Workout[];
 }
 
 export class Home extends React.Component<HomeProps, HomeState> {
   constructor(props: HomeProps) {
     super(props);
     this.state = {
-      workouts: null,
-    }
+      workouts: undefined,
+    };
     this.renderWorkouts = this.renderWorkouts.bind(this);
   }
 
   componentDidMount() {
     const {user: {uid}} = this.props;
     firebase.database().ref(`workouts/${uid}`).orderByChild('lastAccessed').on('value', (snapshot) => {
+      let workouts: Workout[] = [];
       if(snapshot.val()) {
-        let workouts: Workout[] = [];
         snapshot.forEach(child => {
           workouts.push({
             id: child.key,
             ...child.val()
           });
         });
-        this.setState({workouts: workouts.reverse()});
       }
+      this.setState({workouts: workouts.reverse()});
     });
   }
 
@@ -76,7 +76,7 @@ export class Home extends React.Component<HomeProps, HomeState> {
     const {workouts} = this.state;
     return (
       <div className="home">
-        {!workouts ? <PageLoadSpinner /> : (
+        {workouts === undefined ? <PageLoadSpinner /> : (
           <Container>
             {this.renderWorkouts(workouts)}
             <div className="home__create-button">
