@@ -61,6 +61,13 @@ export class WorkoutSummary extends React.Component<WorkoutSummaryProps, {}> {
         workoutSetStatus = 'snoozed';
       }
 
+      const workoutSetHistory = workoutLogs && (
+        <WorkoutSetHistory
+          workoutSetId={workoutSetId}
+          workoutLogs={workoutLogs}
+        />
+      );
+
       return (
         <Accordion>
           <Accordion.Toggle
@@ -73,17 +80,14 @@ export class WorkoutSummary extends React.Component<WorkoutSummaryProps, {}> {
             `}
           >
             {`${exercise.name}${workoutSet.targetReps ? ` x ${workoutSet.targetReps}` : ''}`}
-            {workoutLogs && (
+            {workoutSetHistory && (
               <Accordion.Collapse eventKey={String(index)}>
                 <div className="workout-summary__set__history mt-3">
                   <h6>
                     Recent History
                   </h6>
                   <Card>
-                    <WorkoutSetHistory
-                      workoutSetId={workoutSetId}
-                      workoutLogs={workoutLogs}
-                    />
+                    {workoutSetHistory}
                   </Card>
                 </div>
               </Accordion.Collapse>

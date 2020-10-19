@@ -15,6 +15,7 @@ interface ExerciseLoggingProps {
   exercise: Exercise;
   workoutSet: WorkoutSet;
   onSubsetInputChange: (workoutSubsets: WorkoutSubset[]) => void;
+  nextWorkoutSetDate: number;
 }
 
 interface ExerciseLoggingState {
@@ -25,7 +26,6 @@ interface ExerciseLoggingState {
 export class ExerciseLogging extends React.Component<ExerciseLoggingProps, ExerciseLoggingState> {
   subsetRepsInputRefs: HTMLInputElement[] = [];
   subsetWeightInputRefs: HTMLInputElement[] = [];
-  nextWorkoutSetDate: number
 
   constructor(props: ExerciseLoggingProps) {
     super(props);
@@ -35,7 +35,6 @@ export class ExerciseLogging extends React.Component<ExerciseLoggingProps, Exerc
       }],
       countdownComplete: false,
     };
-    this.nextWorkoutSetDate = Date.now() + props.workoutSet.restInterval * 1000;
   }
 
   componentDidMount() {
@@ -133,6 +132,7 @@ export class ExerciseLogging extends React.Component<ExerciseLoggingProps, Exerc
   
   render() {
     const {subsets} = this.state;
+    console.log('this.props.nextWorkoutSetDate', this.props.nextWorkoutSetDate);
     return (
       <div className="exercise-logging">
         <div className={`
@@ -140,7 +140,7 @@ export class ExerciseLogging extends React.Component<ExerciseLoggingProps, Exerc
           ${this.state.countdownComplete ? 'exercise-logging__countdown--complete' : ''}
         `}>
           <Countdown
-            date={this.nextWorkoutSetDate}
+            date={this.props.nextWorkoutSetDate}
             overtime={true}
             daysInHours={true}
             onComplete={() => {

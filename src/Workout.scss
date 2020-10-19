@@ -1,3 +1,21 @@
+.workout__active__mini-countdown {
+  position: fixed;
+  bottom: 1rem;
+  left: 0;
+  right: 0;
+  margin: 0 1rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  background: black;
+  color: red;
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  padding: 0.5rem;
+  line-height: 1;
+}
+
 .workout__active__skip-button {
   margin-left: 1rem;
 }

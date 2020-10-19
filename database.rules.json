@@ -37,6 +37,7 @@
         ".write": "$uid === auth.uid",
         ".read": "$uid === auth.uid",
         "$workoutLog": {
+          ".indexOn": "workoutId",
           "start": {".validate": "true"},
           "end": {".validate": "true"},
           "workoutId": {".validate": "true"},

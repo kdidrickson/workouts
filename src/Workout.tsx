@@ -14,6 +14,7 @@ import "firebase/database";
 import {withRouter, RouteComponentProps} from "react-router";
 import {Link} from 'react-router-dom';
 import * as lodash from 'lodash';
+import Countdown from 'react-countdown';
 
 import {ExerciseLogging} from './ExerciseLogging';
 import {WorkoutSummary} from './WorkoutSummary';
@@ -42,6 +43,8 @@ interface WorkoutState {
   start?: number;
   end?: number;
   loggingSubsets: WorkoutSubset[];
+  nextWorkoutSetDate?: number;
+  showMiniCountdown: boolean;
 }
 
 class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
@@ -57,6 +60,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       skippedSetIds: [],
       snoozedSetIds: [],
       loggingSubsets: [],
+      showMiniCountdown: false,
     };
     this.renderActiveWorkout = this.renderActiveWorkout.bind(this);
     this.renderStagingWorkout = this.renderStagingWorkout.bind(this);
@@ -92,6 +96,18 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
   }
 
   componentDidUpdate(prevProps: WorkoutProps, prevState: WorkoutState) {
+    if(this.state.workout && !prevState.isResting && this.state.isResting) {
+      const currentWorkoutSet = this.state.workout.workoutSets[this.state.currentWorkoutSetId];
+      this.setState({nextWorkoutSetDate: Date.now() + Number(currentWorkoutSet.restInterval) * 1000})
+    }
+
+    if(prevState.isResting && !this.state.isResting) {
+      console.log('show mini countdown?', this.state.nextWorkoutSetDate < Date.now());
+      console.log('this.state.nextWorkoutSetDate', this.state.nextWorkoutSetDate);
+      console.log('Date.now()', Date.now());
+      this.setState({showMiniCountdown: this.state.nextWorkoutSetDate > Date.now() + 5000});
+    }
+
     if(this.state.workout && !prevState.isRunning && this.state.isRunning) {
       this.setState({
         currentWorkoutSetId: this.getNextWorkoutSetId(),
@@ -315,6 +331,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       currentWorkoutSetId,
       isResting,
       isFinished,
+      nextWorkoutSetDate,
     } = this.state;
     
     if(isFinished) {
@@ -337,18 +354,30 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
 
     return (
       <div className="workout__active">
+        {this.state.showMiniCountdown && this.state.nextWorkoutSetDate && (
+          <div className="workout__active__mini-countdown">
+            <Countdown
+              date={this.state.nextWorkoutSetDate}
+              daysInHours={true}
+              onComplete={() => {
+                this.setState({showMiniCountdown: false});
+              }}
+            />
+          </div>
+        )}
         <Card>
           <Card.Body>
             <Card.Title>
               {currentExercise.name}
             </Card.Title>
-            {isResting ?
+            {isResting && this.state.nextWorkoutSetDate ?
               <ExerciseLogging
                 workoutSet={currentWorkoutSet}
                 exercise={currentExercise}
                 onSubsetInputChange={(loggingSubsets) => {
                   this.setState({loggingSubsets});
                 }}
+                nextWorkoutSetDate={this.state.nextWorkoutSetDate}
               /> :
               this.renderExerciseExecution(currentWorkoutSet, currentExercise)
             }
