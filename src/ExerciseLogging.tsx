@@ -41,6 +41,7 @@ export class ExerciseLogging extends React.Component<ExerciseLoggingProps, Exerc
     if(this.subsetRepsInputRefs[0]) {
       this.subsetRepsInputRefs[0].value = String(this.props.workoutSet.targetReps);
       this.subsetRepsInputRefs[0].focus();
+      this.subsetRepsInputRefs[0].select();
     }
 
     this.props.onSubsetInputChange(this.state.subsets);
@@ -132,7 +133,6 @@ export class ExerciseLogging extends React.Component<ExerciseLoggingProps, Exerc
   
   render() {
     const {subsets} = this.state;
-    console.log('this.props.nextWorkoutSetDate', this.props.nextWorkoutSetDate);
     return (
       <div className="exercise-logging">
         <div className={`
