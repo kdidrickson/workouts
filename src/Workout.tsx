@@ -122,15 +122,19 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
         workoutId: this.props.match.params.id,
       })
       this.setState({workoutLogRef, start});
+      window.addEventListener('beforeunload', this.handleBeforeUnload);
     }
 
-    if(!prevState.isFinished && this.state.isFinished && this.state.workoutLogRef) {
-      const end = Date.now();
-      this.state.workoutLogRef.update({end});
-      this.setState({
-        end,
-        currentWorkoutSetId: null,
-      });
+    if(!prevState.isFinished && this.state.isFinished) {
+      window.removeEventListener('beforeunload', this.handleBeforeUnload);
+      if(this.state.workoutLogRef) {
+        const end = Date.now();
+        this.state.workoutLogRef.update({end});
+        this.setState({
+          end,
+          currentWorkoutSetId: null,
+        });
+      }
     }
 
     const finishedSetIdsDidUpdate = prevState.finishedSetIds !== this.state.finishedSetIds;
@@ -196,6 +200,10 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     }
 
     return null;
+  }
+  
+  handleBeforeUnload(event) {
+    event.returnValue = `Workout in progress. Are you sure you want to leave?`;
   }
 
   renderExerciseExecution(workoutSet: WorkoutSet, exercise: Exercise) {
