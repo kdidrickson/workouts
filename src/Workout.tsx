@@ -204,7 +204,8 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
         <p className="workout__active__target-reps">
           {`Target: ${workoutSet.targetReps} rep${workoutSet.targetReps === 1 ? '' : 's'}`}
         </p>
-        {exercise.notes && <p className="workout__active__notes">{exercise.notes}</p>}
+        {exercise.notes && <p className="workout__active__exercise-notes">{exercise.notes}</p>}
+        {workoutSet.notes && <p className="workout__active__notes">{workoutSet.notes}</p>}
         {exercise.youtubeUrl && (
           <p className="workout__active__more-info">
             <a href={exercise.youtubeUrl} target="_blank">

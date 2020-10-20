@@ -62,7 +62,7 @@ export const WorkoutSetHistory = (props: WorkoutSetHistoryProps) => {
                       <tr>
                         <th>#</th>
                         <th>Reps</th>
-                        <th>Sets</th>
+                        <th>Weight (lbs)</th>
                       </tr>
                     </thead>
                     <tbody>
