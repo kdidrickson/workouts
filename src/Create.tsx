@@ -128,6 +128,7 @@ export class Create extends React.Component<CreateProps, CreateState> {
                   <Form.Label>Target Reps</Form.Label>
                   <Form.Control
                     type="number"
+                    value={this.state.workoutSets[index].targetReps}
                     ref={setTargetRepsRef => this.setTargetRepsRefs[index] = setTargetRepsRef as HTMLInputElement}
                     onChange={() => {
                       updateWorkoutSet('targetReps', this.setTargetRepsRefs[index].value)
@@ -140,6 +141,7 @@ export class Create extends React.Component<CreateProps, CreateState> {
                   <Form.Label>Rest interval (sec)</Form.Label>
                   <Form.Control
                     type="number"
+                    value={this.state.workoutSets[index].restInterval}
                     ref={setRestIntervalRef => this.setRestIntervalRefs[index] = setRestIntervalRef as HTMLInputElement}
                     onChange={() => {
                       updateWorkoutSet('restInterval', this.setRestIntervalRefs[index].value)
@@ -154,6 +156,7 @@ export class Create extends React.Component<CreateProps, CreateState> {
                   <Form.Label>Notes</Form.Label>
                   <Form.Control
                     type="text"
+                    value={this.state.workoutSets[index].notes}
                     ref={setNotesRef => this.setNotesRefs[index] = setNotesRef as HTMLInputElement}
                     onChange={() => {
                       updateWorkoutSet('notes', this.setNotesRefs[index].value)
@@ -183,7 +186,7 @@ export class Create extends React.Component<CreateProps, CreateState> {
                   size="sm"
                   onClick={() => {
                     let workoutSets = [...this.state.workoutSets];
-                    workoutSets.splice(index + 1, 0, workoutSets[index]);
+                    workoutSets.splice(index + 1, 0, {...workoutSets[index]});
                     this.setState({workoutSets});
                   }}
                 >

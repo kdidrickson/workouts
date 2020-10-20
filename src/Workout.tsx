@@ -20,7 +20,7 @@ import {ExerciseLogging} from './ExerciseLogging';
 import {WorkoutSummary} from './WorkoutSummary';
 import {Exercise, Workout as WorkoutType, WorkoutSet, WorkoutSubset, WorkoutLog} from './types';
 import {PageLoadSpinner} from './PageLoadSpinner';
-import { WorkoutSetHistory } from './WorkoutSetHistory';
+import {WorkoutSetHistory, workoutSetHasHistory} from './WorkoutSetHistory';
 
 
 interface WorkoutProps extends RouteComponentProps<{id: string}> {
@@ -98,13 +98,13 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
   componentDidUpdate(prevProps: WorkoutProps, prevState: WorkoutState) {
     if(this.state.workout && !prevState.isResting && this.state.isResting) {
       const currentWorkoutSet = this.state.workout.workoutSets[this.state.currentWorkoutSetId];
-      this.setState({nextWorkoutSetDate: Date.now() + Number(currentWorkoutSet.restInterval) * 1000})
+      this.setState({
+        nextWorkoutSetDate: Date.now() + Number(currentWorkoutSet.restInterval) * 1000,
+        showMiniCountdown: false,
+      })
     }
 
     if(prevState.isResting && !this.state.isResting) {
-      console.log('show mini countdown?', this.state.nextWorkoutSetDate < Date.now());
-      console.log('this.state.nextWorkoutSetDate', this.state.nextWorkoutSetDate);
-      console.log('Date.now()', Date.now());
       this.setState({showMiniCountdown: this.state.nextWorkoutSetDate > Date.now() + 5000});
     }
 
@@ -196,10 +196,6 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     }
 
     return null;
-  }
-
-  renderWorkoutSetHistory(workoutLogs: {[key: string]: WorkoutLog}) {
-    
   }
 
   renderExerciseExecution(workoutSet: WorkoutSet, exercise: Exercise) {
@@ -344,14 +340,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
 
     const currentWorkoutSet = workout.workoutSets[currentWorkoutSetId];
     const currentExercise = exercises[currentWorkoutSet.exerciseId];
-
-    const workoutSetHistory = workoutLogs && (
-      <WorkoutSetHistory
-        workoutSetId={currentWorkoutSetId}
-        workoutLogs={workoutLogs}
-      />
-    );
-
+    
     return (
       <div className="workout__active">
         {this.state.showMiniCountdown && this.state.nextWorkoutSetDate && (
@@ -386,7 +375,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
             {isResting ? this.renderExerciseLoggingActions() : this.renderExerciseExecutionActions()}
           </Card.Footer>
         </Card>
-        {workoutSetHistory && (
+        {workoutSetHasHistory(workoutLogs, currentWorkoutSetId) && (
           <div className="workout__workout-set-history mt-5">
             <Card>
               <Card.Body>
@@ -394,7 +383,10 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
                   Recent History
                 </Card.Title>
                 <Card.Text>
-                  {workoutSetHistory}
+                  <WorkoutSetHistory
+                    workoutSetId={currentWorkoutSetId}
+                    workoutLogs={workoutLogs}
+                  />
                 </Card.Text>
               </Card.Body>
             </Card>

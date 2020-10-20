@@ -8,7 +8,7 @@ import React from 'react';
 import lodash from 'lodash';
 
 import {Workout, Exercise, WorkoutLog} from './types';
-import {WorkoutSetHistory} from './WorkoutSetHistory';
+import {WorkoutSetHistory, workoutSetHasHistory} from './WorkoutSetHistory';
 
 export interface WorkoutSummaryProps {
   workout: Workout;
@@ -61,13 +61,6 @@ export class WorkoutSummary extends React.Component<WorkoutSummaryProps, {}> {
         workoutSetStatus = 'snoozed';
       }
 
-      const workoutSetHistory = workoutLogs && (
-        <WorkoutSetHistory
-          workoutSetId={workoutSetId}
-          workoutLogs={workoutLogs}
-        />
-      );
-
       return (
         <Accordion>
           <Accordion.Toggle
@@ -80,14 +73,17 @@ export class WorkoutSummary extends React.Component<WorkoutSummaryProps, {}> {
             `}
           >
             {`${exercise.name}${workoutSet.targetReps ? ` x ${workoutSet.targetReps}` : ''}`}
-            {workoutSetHistory && (
+            {workoutSetHasHistory(workoutLogs, workoutSetId) && (
               <Accordion.Collapse eventKey={String(index)}>
                 <div className="workout-summary__set__history mt-3">
                   <h6>
                     Recent History
                   </h6>
                   <Card>
-                    {workoutSetHistory}
+                    <WorkoutSetHistory
+                      workoutSetId={workoutSetId}
+                      workoutLogs={workoutLogs}
+                    />
                   </Card>
                 </div>
               </Accordion.Collapse>
