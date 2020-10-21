@@ -15,17 +15,20 @@ interface ExerciseLoggingProps {
   exercise: Exercise;
   workoutSet: WorkoutSet;
   onSubsetInputChange: (workoutSubsets: WorkoutSubset[]) => void;
+  onNotesInputChange: (notes: string) => void;
   nextWorkoutSetDate: number;
 }
 
 interface ExerciseLoggingState {
   subsets: WorkoutSubset[];
   countdownComplete: boolean;
+  notes?: string;
 }
 
 export class ExerciseLogging extends React.Component<ExerciseLoggingProps, ExerciseLoggingState> {
   subsetRepsInputRefs: HTMLInputElement[] = [];
   subsetWeightInputRefs: HTMLInputElement[] = [];
+  notesRef: HTMLInputElement;
 
   constructor(props: ExerciseLoggingProps) {
     super(props);
@@ -50,6 +53,10 @@ export class ExerciseLogging extends React.Component<ExerciseLoggingProps, Exerc
   componentDidUpdate(prevProps: ExerciseLoggingProps, prevState: ExerciseLoggingState) {
     if(prevState.subsets !== this.state.subsets) {
       this.props.onSubsetInputChange(this.state.subsets);
+    }
+
+    if(prevState.notes !== this.state.notes && this.state.notes) {
+      this.props.onNotesInputChange(this.state.notes);
     }
 
     if(prevState.subsets.length < this.state.subsets.length) {
@@ -154,6 +161,19 @@ export class ExerciseLogging extends React.Component<ExerciseLoggingProps, Exerc
               {subsets.map((subset, index) => this.renderWorkoutSubset(subset, index))}
             </ListGroup>
           </Form>
+        </div>
+        <div className="exercise-logging__notes">
+          <Form.Group controlId={`notes`}>
+            <Form.Label><span className="text-nowrap">Notes</span></Form.Label>
+            <Form.Control
+              type="text"
+              className="exercise-logging__notes__input"
+              ref={(notesRef => this.notesRef = notesRef)}
+              onChange={() => {
+                this.setState({notes: this.notesRef.value});
+              }}
+            />
+          </Form.Group>
         </div>
       </div>
     );

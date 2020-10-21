@@ -43,6 +43,7 @@ interface WorkoutState {
   start?: number;
   end?: number;
   loggingSubsets: WorkoutSubset[];
+  loggingNotes?: string;
   nextWorkoutSetDate?: number;
   showMiniCountdown: boolean;
 }
@@ -231,7 +232,8 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       workoutLogRef,
       currentWorkoutSetId,
       setsCompleted,
-      finishedSetIds
+      finishedSetIds,
+      loggingNotes,
     } = this.state;
 
     if(loggingSubsets.length && loggingSubsets.every(({reps, weight}) => reps && weight)) {
@@ -240,6 +242,10 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
           className="exercise-logging__submit-button"
           onClick={async () => {
             if(workoutLogRef && currentWorkoutSetId) {
+              if(loggingNotes) {
+                workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).set({notes: loggingNotes});
+              }
+
               workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).set({setsCompleted});
               const subsetsRef = workoutLogRef.child(`workoutSets/${currentWorkoutSetId}/subsets`);
               loggingSubsets.forEach(workoutSubset => subsetsRef.push().set(workoutSubset));
@@ -374,6 +380,9 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
                 exercise={currentExercise}
                 onSubsetInputChange={(loggingSubsets) => {
                   this.setState({loggingSubsets});
+                }}
+                onNotesInputChange={(loggingNotes) => {
+                  this.setState({loggingNotes});
                 }}
                 nextWorkoutSetDate={this.state.nextWorkoutSetDate}
               /> :

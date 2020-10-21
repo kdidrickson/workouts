@@ -56,33 +56,40 @@ export const WorkoutSetHistory = (props: WorkoutSetHistoryProps) => {
                   Skipped
                 </div>
               ) : (
-                <div className="workout-set-history__set__subsets">
-                  <Table striped bordered hover size="sm">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Reps</th>
-                        <th>Weight (lbs)</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Object.keys(workoutSet.subsets).map((subsetId, index) => {
-                        const subset = workoutSet.subsets[subsetId];
-                        if(!subset.reps || !subset.weight) {
-                          return null;
-                        }
+                <>
+                  <div className="workout-set-history__set__subsets">
+                    <Table striped bordered hover size="sm">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Reps</th>
+                          <th>Weight (lbs)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.keys(workoutSet.subsets).map((subsetId, index) => {
+                          const subset = workoutSet.subsets[subsetId];
+                          if(!subset.reps || !subset.weight) {
+                            return null;
+                          }
 
-                        return (
-                          <tr>
-                            <td>{index + 1}</td>
-                            <td>{subset.reps}</td>
-                            <td>{subset.weight}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </Table>
-                </div>
+                          return (
+                            <tr>
+                              <td>{index + 1}</td>
+                              <td>{subset.reps}</td>
+                              <td>{subset.weight}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </Table>
+                  </div>
+                  {workoutSet.notes && (
+                    <p className="workout-set-history__set__notes">
+                      {workoutSet.notes}
+                    </p>
+                  )}
+                </>
               )}
             </ListGroup.Item>
           );

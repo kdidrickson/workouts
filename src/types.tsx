@@ -27,6 +27,7 @@ export interface Workout {
 export interface WorkoutLogSet {
   setsCompleted?: number;
   skipped?: boolean;
+  notes?: string;
   subsets?: {[key: string]: WorkoutSubset};
 }
 

@@ -45,6 +45,7 @@
             "$workoutSetLog": {
               "setsCompleted": {".validate": "true"},
               "skipped": {".validate": "true"},
+              "notes": {".validate": "true"},
               "subsets": {
                 "$subsetLog": {
                   "reps": {".validate": "true"},
