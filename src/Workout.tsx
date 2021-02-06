@@ -138,9 +138,9 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       }
     }
 
-    const finishedSetIdsDidUpdate = prevState.finishedSetIds !== this.state.finishedSetIds;
-    const skippedSetIdsDidUpdate = prevState.skippedSetIds !== this.state.skippedSetIds;
-    if(finishedSetIdsDidUpdate || skippedSetIdsDidUpdate) {
+    const addedFinishedSet = prevState.finishedSetIds.length < this.state.finishedSetIds.length;
+    const addedSkippedSet = prevState.skippedSetIds.length < this.state.skippedSetIds.length;
+    if(addedFinishedSet || addedSkippedSet) {
       const snoozedSetIds = lodash.difference(
         this.state.snoozedSetIds,
         this.state.finishedSetIds,
@@ -148,14 +148,15 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       );
       this.setState({
         snoozedSetIds,
-        setsCompleted: this.state.setsCompleted + Number(finishedSetIdsDidUpdate),
+        setsCompleted: this.state.setsCompleted + this.state.finishedSetIds.length - prevState.skippedSetIds.length,
         isFinished: this.isFinished(),
         currentWorkoutSetId: this.getNextWorkoutSetId(),
         isResting: false,
       });
     }
 
-    if(prevState.snoozedSetIds !== this.state.snoozedSetIds) {
+    const addedSnoozedSet = prevState.snoozedSetIds.length < this.state.snoozedSetIds.length;
+    if(addedSnoozedSet) {
       this.setState({
         currentWorkoutSetId: this.getNextWorkoutSetId(),
       });
@@ -169,36 +170,21 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
 
   getNextWorkoutSetId(simulateSnoozed?: string): string | null {
     const {workout, finishedSetIds, skippedSetIds, currentWorkoutSetId} = this.state;
-    let {snoozedSetIds} = this.state;
+    const workoutSetIds = Object.keys(workout.workoutSets);
+    const currentWorkoutSetIndex = workoutSetIds.indexOf(currentWorkoutSetId);
 
-    if(simulateSnoozed) {
-      snoozedSetIds = [...snoozedSetIds, simulateSnoozed];
-    }
-
-    if(!workout) {
-      return null;
-    }
-
-    let virginWorkoutSets = {...workout.workoutSets};
-    finishedSetIds.forEach(finishedSetId => {
-      delete virginWorkoutSets[finishedSetId];
-    });
-    skippedSetIds.forEach(skippedSetId => {
-      delete virginWorkoutSets[skippedSetId];
-    });
-    snoozedSetIds.forEach(snoozedSetId => {
-      delete virginWorkoutSets[snoozedSetId];
-    });
-
-    const virginWorkoutSetIds = Object.keys(virginWorkoutSets);
-    if(virginWorkoutSetIds.length) {
-      return virginWorkoutSetIds[0];
-    }
-
-    if(snoozedSetIds.length) {
-      const currentSnoozedIndex = lodash.indexOf(snoozedSetIds, currentWorkoutSetId);
-      return snoozedSetIds[currentSnoozedIndex + 1] || snoozedSetIds[0];
-    }
+    let i = currentWorkoutSetIndex;
+    do {
+      i = (i + 1) > workoutSetIds.length - 1 ? 0 : (i + 1);
+      const nextWorkoutSetId = workoutSetIds[i];
+      if(
+        !skippedSetIds.includes(nextWorkoutSetId)
+        && !finishedSetIds.includes(nextWorkoutSetId)
+        && nextWorkoutSetId !== currentWorkoutSetId
+      ) {
+        return nextWorkoutSetId;
+      }
+    } while (i !== currentWorkoutSetIndex)
 
     return null;
   }
