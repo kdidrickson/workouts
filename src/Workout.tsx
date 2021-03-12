@@ -65,6 +65,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     };
     this.renderActiveWorkout = this.renderActiveWorkout.bind(this);
     this.renderStagingWorkout = this.renderStagingWorkout.bind(this);
+    this.handleExerciseLoggingSubmit = this.handleExerciseLoggingSubmit.bind(this);
     this.isFinished = this.isFinished.bind(this);
   }
 
@@ -212,7 +213,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     );
   }
 
-  renderExerciseLoggingActions() {
+  async handleExerciseLoggingSubmit() {
     const {
       loggingSubsets,
       workoutLogRef,
@@ -222,24 +223,25 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
       loggingNotes,
     } = this.state;
 
+    if(workoutLogRef && currentWorkoutSetId) {
+      workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).set({setsCompleted});
+      loggingNotes && workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).update({notes: loggingNotes});
+      const subsetsRef = workoutLogRef.child(`workoutSets/${currentWorkoutSetId}/subsets`);
+      loggingSubsets.forEach(workoutSubset => subsetsRef.push().set(workoutSubset));
+    }
+    this.setState({
+      finishedSetIds: [...finishedSetIds, currentWorkoutSetId],
+    });
+  }
+
+  renderExerciseLoggingActions() {
+    const {loggingSubsets} = this.state;
+
     if(loggingSubsets.length && loggingSubsets.every(({reps, weight}) => reps && weight)) {
       return (
         <Button
           className="exercise-logging__submit-button"
-          onClick={async () => {
-            if(workoutLogRef && currentWorkoutSetId) {
-              if(loggingNotes) {
-                workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).set({notes: loggingNotes});
-              }
-
-              workoutLogRef.child(`workoutSets/${currentWorkoutSetId}`).set({setsCompleted});
-              const subsetsRef = workoutLogRef.child(`workoutSets/${currentWorkoutSetId}/subsets`);
-              loggingSubsets.forEach(workoutSubset => subsetsRef.push().set(workoutSubset));
-            }
-            this.setState({
-              finishedSetIds: [...finishedSetIds, currentWorkoutSetId],
-            });
-          }}
+          onClick={this.handleExerciseLoggingSubmit}
         >
           Proceed
         </Button>
