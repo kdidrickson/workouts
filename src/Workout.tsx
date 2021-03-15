@@ -204,7 +204,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
         {workoutSet.notes && <p className="workout__active__notes">{workoutSet.notes}</p>}
         {exercise.youtubeUrl && (
           <p className="workout__active__more-info">
-            <a href={exercise.youtubeUrl} target="_blank">
+            <a href={exercise.youtubeUrl} target="_blank" rel="noopener noreferrer">
               More info
             </a>
           </p>
@@ -231,6 +231,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     }
     this.setState({
       finishedSetIds: [...finishedSetIds, currentWorkoutSetId],
+      loggingNotes: undefined,
     });
   }
 
@@ -346,10 +347,10 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
     
     return (
       <div className="workout__active">
-        {this.state.showMiniCountdown && this.state.nextWorkoutSetDate && (
+        {this.state.showMiniCountdown && nextWorkoutSetDate && (
           <div className="workout__active__mini-countdown">
             <Countdown
-              date={this.state.nextWorkoutSetDate}
+              date={nextWorkoutSetDate}
               daysInHours={true}
               onComplete={() => {
                 this.setState({showMiniCountdown: false});
@@ -416,7 +417,7 @@ class WorkoutWithoutRouter extends React.Component<WorkoutProps, WorkoutState> {
   }
 
   renderStagingWorkout() {
-    const {workout, exercises, workoutLogs} = this.state;
+    const {workout, workoutLogs} = this.state;
     const {user, match: {params}} = this.props;
 
     if(workout === null) {

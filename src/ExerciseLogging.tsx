@@ -9,7 +9,7 @@ import Button from 'react-bootstrap/Button';
 import React from 'react';
 import Countdown from 'react-countdown';
 
-import {Exercise, WorkoutSet, WorkoutSubset, WorkoutLog} from './types';
+import {Exercise, WorkoutSet, WorkoutSubset} from './types';
 
 interface ExerciseLoggingProps {
   exercise: Exercise;

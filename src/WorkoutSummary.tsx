@@ -73,6 +73,11 @@ export class WorkoutSummary extends React.Component<WorkoutSummaryProps, {}> {
             `}
           >
             {`${exercise.name}${workoutSet.targetReps ? ` x ${workoutSet.targetReps}` : ''}`}
+            {workoutSet.notes && (
+              <div className="workout-summary__set__notes">
+                {workoutSet.notes}
+              </div>
+            )}
             {workoutSetHasHistory(workoutLogs, workoutSetId) && (
               <Accordion.Collapse eventKey={String(index)}>
                 <div className="workout-summary__set__history mt-3">

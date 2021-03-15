@@ -22,4 +22,18 @@
       margin-right: 0.5rem;
     }
   }
+
+  &__notes {
+    font-style: italic;
+    font-size: .9rem;
+    color: grey;
+
+    &:before {
+      content: '"';
+    }
+
+    &:after {
+      content: '"';
+    }
+  }
 }
